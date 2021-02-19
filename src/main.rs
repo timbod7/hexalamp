@@ -53,8 +53,10 @@ fn main() -> ! {
 
         let mut ws = Ws2812::new(spi);
 
-        let mut frame: animation::Frame = animation::new_frame();
-        let mut anim: animation::Blinky = animation::Blinky::new();
+        
+        let mut anim = animation::Blinky::new();
+        let mut frame = anim.init_frame();
+        ws.write(frame.iter().cloned()).unwrap();
 
         loop {
           let delayms = anim.next_frame(&mut frame);

@@ -9,6 +9,9 @@ pub fn new_frame() -> Frame {
 
 
 pub trait Animation {
+  // Create the frame for the start of the animations
+  fn init_frame(&self) -> Frame;
+
   // Generate the next frame of the animation, and return the delay in
   // ms until the next;
   fn next_frame(&mut self, frame: &mut Frame) -> u16;
@@ -35,6 +38,10 @@ impl Blinky {
 }
 
 impl Animation for Blinky {
+  fn init_frame(&self) -> Frame {
+    [GREEN2; 60]
+  }
+
   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
     frame[self.framei] = GREEN2;
     self.framei = (self.framei + 1) % 4;
