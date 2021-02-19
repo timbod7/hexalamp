@@ -14,9 +14,12 @@ use crate::hal::spi::Spi;
 use crate::ws2812::Ws2812;
 use cortex_m::peripheral::Peripherals;
 
-use smart_leds::{SmartLedsWrite, RGB8};
+use smart_leds::{SmartLedsWrite};
 
 use cortex_m_rt::entry;
+
+mod animation;
+use animation::{Animation};
 
 #[entry]
 fn main() -> ! {
@@ -48,34 +51,15 @@ fn main() -> ! {
 
         let spi = Spi::spi2(dp.SPI2, pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
 
-        let mut data: [RGB8; 8] = [RGB8::default(); 8];
-        let empty: [RGB8; 8] = [RGB8::default(); 8];
         let mut ws = Ws2812::new(spi);
+
+        let mut frame: animation::Frame = animation::new_frame();
+        let mut anim: animation::Blinky = animation::Blinky::new();
+
         loop {
-            data[0] = RGB8 {
-                r: 0,
-                g: 0,
-                b: 0xff,
-            };
-            data[1] = RGB8 {
-                r: 0,
-                g: 0xff,
-                b: 0,
-            };
-            data[2] = RGB8 {
-                r: 0xff,
-                g: 0,
-                b: 0,
-            };
-            data[3] = RGB8 {
-                r: 0xff,
-                g: 0xff,
-                b: 0xff,
-            };
-            ws.write(data.iter().cloned()).unwrap();
-            delay.delay_ms(1000 as u16);
-            ws.write(empty.iter().cloned()).unwrap();
-            delay.delay_ms(1000 as u16);
+          let delayms = anim.next_frame(&mut frame);
+          ws.write(frame.iter().cloned()).unwrap();
+          delay.delay_ms(delayms);
         }
     }
     loop {
