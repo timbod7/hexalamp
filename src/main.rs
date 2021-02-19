@@ -48,24 +48,29 @@ fn main() -> ! {
 
         let spi = Spi::spi2(dp.SPI2, pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
 
-        let mut data: [RGB8; 3] = [RGB8::default(); 3];
-        let empty: [RGB8; 3] = [RGB8::default(); 3];
+        let mut data: [RGB8; 8] = [RGB8::default(); 8];
+        let empty: [RGB8; 8] = [RGB8::default(); 8];
         let mut ws = Ws2812::new(spi);
         loop {
             data[0] = RGB8 {
                 r: 0,
                 g: 0,
-                b: 0x10,
+                b: 0xff,
             };
             data[1] = RGB8 {
                 r: 0,
-                g: 0x10,
+                g: 0xff,
                 b: 0,
             };
             data[2] = RGB8 {
-                r: 0x10,
+                r: 0xff,
                 g: 0,
                 b: 0,
+            };
+            data[3] = RGB8 {
+                r: 0xff,
+                g: 0xff,
+                b: 0xff,
             };
             ws.write(data.iter().cloned()).unwrap();
             delay.delay_ms(1000 as u16);
