@@ -8,3 +8,4 @@ break HardFault
 break rust_begin_unwind
 
 load
+continue

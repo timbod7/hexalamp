@@ -21,6 +21,7 @@ use cortex_m_rt::entry;
 mod animation;
 use animation::{Animation};
 
+
 #[entry]
 fn main() -> ! {
     rtt_init_default!();
@@ -54,7 +55,7 @@ fn main() -> ! {
         let mut ws = Ws2812::new(spi);
 
         
-        let mut anim = animation::Blinky::new();
+        let mut anim = animation::Anim2::new();
         let mut frame = anim.init_frame();
         ws.write(frame.iter().cloned()).unwrap();
 
