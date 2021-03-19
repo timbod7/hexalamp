@@ -18,6 +18,7 @@ const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
 const BLUE: RGB8 = RGB8 {r: 0, g: 0, b: 0xff,};
 const GREEN: RGB8 = RGB8 {r: 0, g: 0xff, b: 0,};
 const RED: RGB8 = RGB8 {r: 0xff, g: 0, b: 0,};
+const WHITE: RGB8 = RGB8 {r: 0xff, g: 0xff, b: 0xff,};
 const YELLOW: RGB8 = RGB8 {r: 255, g:128, b: 0,};
 
 
@@ -29,9 +30,7 @@ pub struct Anim1 {
 }
 
 impl Anim1 {
- const BG: RGB8 = BLUE;
- const FG: RGB8 = GREEN;
- const FG2: RGB8 = GREEN2;
+ const BG: RGB8 = BLACK;
 
   pub fn new() -> Self {
     Anim1 {framei:0}
@@ -49,11 +48,11 @@ impl Animation for Anim1 {
 
     fill( frame, Anim1::BG);
 
-    let b = self.framei;
-    frame[faddr(b,0)] = RED;
+    let b = self.framei as i16;
+    frame[faddr(b,0)] = BLUE;
     frame[faddr(b,1)] = GREEN;
-    frame[faddr(b,2)] = YELLOW;
-    frame[faddr(b,3)] = WHITE2;
+    frame[faddr(b,2)] = RED;
+    frame[faddr(b,3)] = YELLOW;
 
 
     self.framei = self.framei + 1;
@@ -83,15 +82,15 @@ impl Anim2 {
      self.framei = self.framei + 1;
 
      for ci in 0..15 {
-       let hue: u8 = ((ci as u32 *255)/15) as u8;
+       let hue: u8 = (( (ci*8-self.framei) as u32 *255)/120) as u8;
        let c = hsv2rgb(Hsv{hue:hue, sat:255, val:255});
-       let x : usize = ci as usize + self.framei;
+       let x : i16 = ci as i16;
        frame[faddr(x, 0)] = c;
        frame[faddr(x, 1)] = c;
        frame[faddr(x, 2)] = c;
-       frame[faddr(x, 3)] = c;
+       frame[faddr(x-1, 3)] = c;
      }
-     100
+     50
    }
  }
 
@@ -114,8 +113,8 @@ impl Anim2 {
  ];
 
 
-fn faddr(x: usize, y:usize) -> usize {
-  ADDR[x % 15][y%4]
+fn faddr(x: i16, y:i16) -> usize {
+  ADDR[((x +15) % 15) as usize][(y as usize)%4]
   // (x * 2 + (y % 2)) % 30  + (y >> 1) * 30 + (if y % 4 >= 2 {2} else {0})
 }
 
