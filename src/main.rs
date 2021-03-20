@@ -55,7 +55,7 @@ fn main() -> ! {
         let mut ws = Ws2812::new(spi);
 
         
-        let mut anim = animation::Anim2::new();
+        let mut anim = animation::anim2::Anim::new();
         let mut frame = anim.init_frame();
         ws.write(frame.iter().cloned()).unwrap();
 
