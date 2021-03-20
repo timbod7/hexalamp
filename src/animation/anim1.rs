@@ -8,28 +8,28 @@ const RED: RGB8 = RGB8 {r: 0xff, g: 0, b: 0,};
 const YELLOW: RGB8 = RGB8 {r: 255, g:128, b: 0,};
 
 
-pub struct Anim1 {
+pub struct Anim {
   framei: usize
 }
 
-impl Anim1 {
+impl Anim {
  const BG: RGB8 = BLACK;
 
   pub fn new() -> Self {
-    Anim1 {framei:0}
+    Anim {framei:0}
   }
 }
 
-impl Animation for Anim1 {
+impl Animation for Anim {
 
 
   fn init_frame(&self) -> Frame {
-    [Anim1::BG; 180]
+    [Anim::BG; 180]
   }
 
   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
 
-    fill( frame, Anim1::BG);
+    fill( frame, Anim::BG);
 
     let b = self.framei as i16;
     frame[faddr(b,0)] = BLUE;
