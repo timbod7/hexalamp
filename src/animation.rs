@@ -2,7 +2,7 @@
 use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
-pub type Frame = [RGB8; 60];
+pub type Frame = [RGB8; 180];
 
 pub trait Animation {
   // Create the frame for the start of the animations
@@ -41,7 +41,7 @@ impl Animation for Anim1 {
 
 
   fn init_frame(&self) -> Frame {
-    [Anim1::BG; 60]
+    [Anim1::BG; 180]
   }
 
   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
@@ -75,7 +75,7 @@ impl Anim2 {
  
  
    fn init_frame(&self) -> Frame {
-     [BLACK; 60]
+     [BLACK; 180]
    }
  
    fn next_frame(&mut self, frame: &mut Frame) -> u16 {
@@ -88,33 +88,35 @@ impl Anim2 {
        frame[faddr(x, 0)] = c;
        frame[faddr(x, 1)] = c;
        frame[faddr(x, 2)] = c;
-       frame[faddr(x-1, 3)] = c;
+       frame[faddr(x, 3)] = c;
+       frame[faddr(x, 4)] = c;
+       frame[faddr(x, 5)] = c;
      }
      50
    }
  }
 
- const ADDR: [[usize; 4]; 15] = [
-  [0, 1, 32, 33],
-  [2, 3, 34, 35],
-  [4, 5, 36, 37],
-  [6, 7, 38, 39],
-  [8, 9, 40, 41],
-  [10, 11, 42, 43],
-  [12, 13, 44, 45],
-  [14, 15, 46, 47],
-  [16, 17, 48, 49],
-  [18, 19, 50, 51],
-  [20, 21, 52, 53],
-  [22, 23, 54, 55],
-  [24, 25, 56, 57],
-  [26, 27, 58, 59],
-  [28, 29, 30, 31]
+ const ADDR: [[usize; 6]; 15] = [
+  [0, 1, 32, 33, 64, 65],
+  [2, 3, 34, 35, 66, 67],
+  [4, 5, 36, 37, 68, 69],
+  [6, 7, 38, 39, 70, 72],
+  [8, 9, 40, 41, 72, 73],
+  [10, 11, 42, 43, 74, 75],
+  [12, 13, 44, 45, 76, 77],
+  [14, 15, 46, 47, 78, 79],
+  [16, 17, 48, 49, 80, 81],
+  [18, 19, 50, 51, 82, 83],
+  [20, 21, 52, 53, 84, 85],
+  [22, 23, 54, 55, 86, 87],
+  [24, 25, 56, 57, 88, 89],
+  [26, 27, 58, 59, 60, 61],
+  [28, 29, 30, 31, 62, 63],
  ];
 
 
 fn faddr(x: i16, y:i16) -> usize {
-  ADDR[((x +15) % 15) as usize][(y as usize)%4]
+  ADDR[((x +15) % 15) as usize][(y as usize)%6]
   // (x * 2 + (y % 2)) % 30  + (y >> 1) * 30 + (if y % 4 >= 2 {2} else {0})
 }
 
