@@ -1,126 +1,93 @@
 use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
-use super::{Animation, Frame, fill, ADDR, FRAME_XMAX, FRAME_YMAX};
+use super::{Animation, Frame, XorShift32, CellAddr, CellType, GAMMA, NUM_GAMMA, FRAME_SIZE, FRAME_XMAX, FRAME_YMAX};
 
 const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
-const WHITE: RGB8 = RGB8 {r: 255, g: 255, b: 155,};
 
+const K1: i32 = 1;
+const K2: i32 = 100;
+const CLAMP_S: i32 = 8192;
+
+const K3: i32 = 94;
+const K4: i32 = 100;
 
 pub struct Anim {
-  framei: usize
+  v : [i32; FRAME_SIZE],
+  s : [i32; FRAME_SIZE],
+  rng: XorShift32,
 }
 
 impl Anim { 
   pub fn new() -> Self {
-    Anim {framei:0}
+    let v = [0; FRAME_SIZE];
+    let mut s = [0; FRAME_SIZE];
+    s[CellAddr{x:4, y:2}.faddr()] = 8000;
+    s[CellAddr{x:12, y:3}.faddr()] = -8000;
+    Anim {v, s, rng:XorShift32{a:456} }
   }
  }
  
  impl Animation for Anim {
- 
- 
-   fn init_frame(&self) -> Frame {
-     [BLACK; 180]
-   }
- 
-   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
-     fill(frame, BLACK);
-     let cell = CellAddr{x:(self.framei / FRAME_YMAX) % FRAME_XMAX, y: self.framei % FRAME_YMAX};
-     let ctype = cell_type(&cell);
-     frame[cell.faddr()] = WHITE;
-     for ni in 0..num_neighbours(ctype) {
-       let ncell = neighbour(&cell, ctype, ni);
-       frame[ncell.faddr()] = WHITE;
-     }
-     self.framei += 1;
-     200
-   }
- }
-
-
-
- struct CellAddr {
-   x : usize,
-   y : usize,
- }
-
- impl CellAddr {
-
-  fn faddr(&self) -> usize {
-    ADDR[self.x][self.y]
-  }
-
-  fn left(&self) -> CellAddr {
-    CellAddr{x: if self.x == 0 {FRAME_XMAX-1} else {self.x-1}, y:self.y}
-  }
-  fn right(&self) -> CellAddr {
-    CellAddr{x: if self.x == FRAME_XMAX-1 {0} else {self.x+1}, y:self.y}
-  }
-  fn down(&self) -> CellAddr {
-    CellAddr{x: self.x, y: if self.y == 0 {FRAME_YMAX-1} else {self.y-1}}
-  }
-  fn up(&self) -> CellAddr {
-    CellAddr{x: self.x, y: if self.y == FRAME_YMAX-1 {0} else {self.y+1}}
-  }
- }
-
- #[derive(Copy, Clone)]
- enum CellType {
-   BEdge,
-   Internal,
-   TEdge
-}
-
-
-fn cell_type(cell: &CellAddr) -> CellType {
-  if cell.y == 0 { 
-    CellType::BEdge
-  }  else if cell.y == FRAME_YMAX - 1 {
-    CellType::TEdge
-  } else {
-    CellType::Internal
-  }
-}
   
-fn num_neighbours(ctype: CellType) -> usize {
-  match ctype {
-    CellType::BEdge => 2,
-    CellType::Internal => 3,
-    CellType::TEdge => 2
+  fn init_frame(&self) -> Frame {
+    [BLACK; FRAME_SIZE]
   }
-}
+ 
+  fn next_frame(&mut self, frame: &mut Frame) -> u16 {
 
-fn neighbour(cell: &CellAddr, ctype: CellType, i: usize) -> CellAddr {
-  match ctype {
-    CellType::BEdge => {
-      match i {
-        0 => cell.left().up(),
-        _ => cell.up()
+    // Update velocities
+    for x in 0..FRAME_XMAX {
+      for y in 0..FRAME_YMAX {
+        let cell = CellAddr{x,y};
+        let ctype = CellType::from(&cell);
+        let nn = ctype.num_neighbours();
+        let mut s_avg : i32 = 0;
+        for ni in 0..nn {
+          let ncell = ctype.neighbour(&cell, ni);
+          s_avg += self.s[ncell.faddr()];
+        }
+        let fi = cell.faddr();
+        s_avg = s_avg / (nn as i32);
+        // s_avg = 0;
+        let s = self.s[fi];
+        let mut v = self.v[fi];
+        v += (s_avg - s) * K1 / K2;
+        self.v[fi] = v;
       }
     }
-    CellType::Internal => {
-      if cell.y % 2 == 0 {
-        // up pointing
-        match i {
-          0 => cell.down(),
-          1 => cell.left().up(),
-          _ => cell.up()  
-        }
-      } else {
-        // down pointing
-        match i {
-          0 => cell.down(),
-          1 => cell.right().down(),
-          _ => cell.up()  
-        }
+
+    // Update displacements, and render
+    for fi in 0..FRAME_SIZE {
+      let mut s = self.s[fi];
+      s += self.v[fi];
+      s = s * K3 / K4;
+      if s > CLAMP_S {
+        s = CLAMP_S;
       }
-    },
-    CellType::TEdge => {
-      match i {
-        0 => cell.down(),
-        _ => cell.right().down()
+      if s < -CLAMP_S {
+        s = - CLAMP_S;
       }
+      self.s[fi] = s;
+
+      const HUE1: u8 = 128;
+      const HUE2: u8 = 64;
+
+      let hue : u8 = if s > 0 {HUE1} else {HUE2};
+      let sat : u8 = 255;
+      let val : u8 = GAMMA[(NUM_GAMMA as i32 *  s.abs() / CLAMP_S) as usize] as u8;
+      // let val : u8 = (255 *  s.abs() / CLAMP_S) as u8;
+      frame[fi] = hsv2rgb(Hsv{hue, sat, val});
     }
+
+    // Random Perterbations
+    let r1 = self.rng.next();
+    if r1 % 100 > 90 {
+      let r2 = self.rng.next();
+      self.s[(r2 as usize) % FRAME_SIZE] = 8000;
+      self.s[((r2+1) as usize) % FRAME_SIZE] = 8000;
+    }
+
+    50
   }
 }

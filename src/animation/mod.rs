@@ -55,3 +55,131 @@ fn fill(frame: &mut Frame, color: RGB8) {
   }
 }
 
+
+
+pub struct XorShift32 {
+  a: u32,
+}
+
+impl XorShift32 {
+  pub fn next(&mut self) -> u32 {
+      let mut x = self.a;
+      x ^= x << 13;
+      x ^= x << 17;
+      x ^= x >> 5;
+      self.a = x;
+      x
+  }
+}
+
+
+
+const NUM_GAMMA: usize = 16;
+const GAMMA : [u8; NUM_GAMMA] = [
+  0,
+  1,
+  2,
+  6,
+  12,
+  20,
+  31,
+  44,
+  60,
+  79,
+  100,
+  125,
+  153,
+  183,
+  218,
+  255,
+];
+
+ struct CellAddr {
+   x : usize,
+   y : usize,
+ }
+
+ impl CellAddr {
+
+  fn faddr(&self) -> usize {
+    ADDR[self.x][self.y]
+  }
+
+  fn left(&self) -> CellAddr {
+    CellAddr{x: if self.x == 0 {FRAME_XMAX-1} else {self.x-1}, y:self.y}
+  }
+  fn right(&self) -> CellAddr {
+    CellAddr{x: if self.x == FRAME_XMAX-1 {0} else {self.x+1}, y:self.y}
+  }
+  fn down(&self) -> CellAddr {
+    CellAddr{x: self.x, y: if self.y == 0 {FRAME_YMAX-1} else {self.y-1}}
+  }
+  fn up(&self) -> CellAddr {
+    CellAddr{x: self.x, y: if self.y == FRAME_YMAX-1 {0} else {self.y+1}}
+  }
+ }
+
+ #[derive(Copy, Clone)]
+ enum CellType {
+   BEdge,
+   Internal,
+   TEdge
+}
+
+impl CellType {
+
+  fn from(cell: &CellAddr) -> CellType {
+    if cell.y == 0 { 
+      CellType::BEdge
+    }  else if cell.y == FRAME_YMAX - 1 {
+      CellType::TEdge
+    } else {
+      CellType::Internal
+    }
+  }
+    
+  fn num_neighbours(&self) -> usize {
+    match self {
+      CellType::BEdge => 2,
+      CellType::Internal => 3,
+      CellType::TEdge => 2
+    }
+  }
+
+  fn neighbour(&self, cell: &CellAddr, i: usize) -> CellAddr {
+    match self {
+      CellType::BEdge => {
+        match i {
+          0 => cell.left().up(),
+          _ => cell.up()
+        }
+      }
+      CellType::Internal => {
+        if cell.y % 2 == 0 {
+          // up pointing
+          match i {
+            0 => cell.down(),
+            1 => cell.left().up(),
+            _ => cell.up()  
+          }
+        } else {
+          // down pointing
+          match i {
+            0 => cell.down(),
+            1 => cell.right().down(),
+            _ => cell.up()  
+          }
+        }
+      },
+      CellType::TEdge => {
+        match i {
+          0 => cell.down(),
+          _ => cell.right().down()
+        }
+      }
+    }
+  }
+}
+
+
+
