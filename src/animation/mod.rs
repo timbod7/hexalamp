@@ -19,6 +19,7 @@ pub trait Animation {
 pub mod anim0;
 pub mod anim1;
 pub mod anim2;
+pub mod anim3;
 
  const ADDR: [[usize; FRAME_YMAX]; FRAME_XMAX] = [
   [0, 1, 30, 31, 62, 63],
@@ -43,6 +44,7 @@ fn faddr(x: i16, y:i16) -> usize {
   ADDR[x.rem_euclid(FRAME_XMAX as i16) as usize][y.rem_euclid(FRAME_YMAX as i16) as usize]
 }
 
+
 // fn faddr(x: i16, y:i16) -> usize {
 //   ADDR[(x as usize) % FRAME_XMAX][(y as usize) % FRAME_YMAX]
 // }
@@ -52,3 +54,4 @@ fn fill(frame: &mut Frame, color: RGB8) {
     frame[i] = color;
   }
 }
+
