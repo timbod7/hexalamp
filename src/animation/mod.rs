@@ -95,6 +95,7 @@ const GAMMA : [u8; NUM_GAMMA] = [
   255,
 ];
 
+#[derive(Copy, Clone)]
  struct CellAddr {
    x : usize,
    y : usize,
@@ -119,6 +120,23 @@ const GAMMA : [u8; NUM_GAMMA] = [
     CellAddr{x: self.x, y: if self.y == FRAME_YMAX-1 {0} else {self.y+1}}
   }
  }
+
+ #[derive(Copy, Clone)]
+ enum CellOrientation {
+   PointUp,
+   PointDown,
+}
+
+impl CellOrientation {
+  fn from(cell: &CellAddr) -> CellOrientation {
+    if cell.y % 2 == 0 {
+     CellOrientation::PointUp 
+    } else {
+     CellOrientation::PointDown
+    }
+  }
+}
+
 
  #[derive(Copy, Clone)]
  enum CellType {
