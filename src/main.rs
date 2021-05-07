@@ -24,10 +24,6 @@ use cortex_m::peripheral::Peripherals;
 
 use core::cell::RefCell;
 
-
-use debounced_pin::prelude::*;
-use debounced_pin::ActiveHigh;
-
 use smart_leds::{SmartLedsWrite};
 
 
@@ -87,7 +83,6 @@ fn main() -> ! {
           cortex_m::peripheral::NVIC::unmask(pac::Interrupt::TIM2);
         }
 
-        let bdb0 = DebouncedInputPin::new(b0, ActiveHigh);
 
         let mut delay = Delay::new(cp.SYST, clocks);
 
