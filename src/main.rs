@@ -1,124 +1,139 @@
 #![no_main]
 #![no_std]
 
-use panic_rtt_target as _;
-use rtt_target::rtt_init_default;
+//use panic_rtt_target as _;
+//use rtt_target::rtt_init_default;
 
-use cortex_m_rt::{entry};
-use cortex_m::{interrupt::Mutex};
+#![no_main]
 
-use stm32f1xx_hal as hal;
+// you can put a breakpoint on `rust_begin_unwind` to catch panics
+use panic_halt as _;
 use ws2812_spi as ws2812;
+use stm32f1xx_hal as hal;
 
-use crate::hal::delay::Delay;
-use crate::hal::pac;
-use crate::hal::gpio;
-use crate::hal::prelude::*;
+use rtic::app;
+use rtic::cyccnt::{Duration};
+
+use cortex_m::peripheral::DWT;
+
+use stm32f1xx_hal::{
+    gpio::{gpiob, gpioc::PC13, Output, PushPull, State, Alternate, Input, Floating},
+    pac,
+    prelude::*,
+    timer::{CountDownTimer, Event, Timer},
+};
 use crate::hal::spi::Spi;
-use crate::hal::device::interrupt;
-use crate::hal::timer::{Event, Timer, CountDownTimer};
-use embedded_hal::digital::v2::OutputPin;
 
 use crate::ws2812::Ws2812;
-use cortex_m::peripheral::Peripherals;
-
-use core::cell::RefCell;
 
 use smart_leds::{SmartLedsWrite};
-
 
 mod animation;
 use animation::{Animation};
 
-// Make IO globally available
-type DEBUGLEDPIN = gpio::gpioc::PC13<gpio::Output<gpio::PushPull>>;
-static G_LED: Mutex<RefCell<Option<DEBUGLEDPIN>>> = Mutex::new(RefCell::new(None));
-static G_TIM: Mutex<RefCell<Option<CountDownTimer<pac::TIM2>>>> = Mutex::new(RefCell::new(None));
 
-#[entry]
-fn main() -> ! {
-    rtt_init_default!();
+type Display = ws2812_spi::Ws2812<Spi<stm32f1xx_hal::pac::SPI2, hal::spi::Spi2NoRemap, (gpiob::PB13<Alternate<PushPull>>, gpiob::PB14<Input<Floating>>, gpiob::PB15<Alternate<PushPull>>), u8>>;
 
-    if let (Some(dp), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
+#[app(device = stm32f1xx_hal::pac, monotonic = rtic::cyccnt::CYCCNT, peripherals = true)]
+const APP: () = {
+    struct Resources {
+        led: PC13<Output<PushPull>>,
+        timer_handler: CountDownTimer<pac::TIM1>,
+        display: Display,
+    }
+
+    #[init(schedule = [animate])]
+    fn init(mut cx: init::Context) -> init::LateResources {
+        // Initialize (enable) the monotonic timer (CYCCNT)
+        cx.core.DCB.enable_trace();
+        // required on Cortex-M7 devices that software lock the DWT (e.g. STM32F7)
+        DWT::unlock();
+        cx.core.DWT.enable_cycle_counter();
+
         // Take ownership over the raw flash and rcc devices and convert them into the corresponding
         // HAL structs
-        let mut flash = dp.FLASH.constrain();
-        let mut rcc = dp.RCC.constrain();
+        let mut flash = cx.device.FLASH.constrain();
+        let mut rcc = cx.device.RCC.constrain();
 
-        // Freeze the configuration of all the clocks in the system and store the frozen frequencies in
-        // `clocks`
+        // Freeze the configuration of all the clocks in the system and store the frozen frequencies
+        // in `clocks`
+        
         let clocks = rcc
-            .cfgr
-            .sysclk(48.mhz())
-            .pclk1(24.mhz())
-            .freeze(&mut flash.acr);
+          .cfgr
+          .sysclk(48.mhz())
+          .pclk1(24.mhz())
+          .freeze(&mut flash.acr);
 
-        // Acquire the GPIOS peripherals
-        let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
-        let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+        // Acquire the GPIOC peripheral
+        let mut gpiob = cx.device.GPIOB.split(&mut rcc.apb2);
+        let mut gpioc = cx.device.GPIOC.split(&mut rcc.apb2);
 
-        // Configure the debug LED
-        let debug_led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-        cortex_m::interrupt::free(|cs| *G_LED.borrow(cs).borrow_mut() = Some(debug_led));
+        // Configure gpio C pin 13 (LED) as a push-pull output for debugging
+        let led = gpioc
+            .pc13
+            .into_push_pull_output_with_state(&mut gpioc.crh, State::High);
 
         // Configure SPI for ws2812 leds
         let spi_pins = (
-            gpiob.pb13.into_alternate_push_pull(&mut gpiob.crh),
-            gpiob.pb14.into_floating_input(&mut gpiob.crh),
-            gpiob.pb15.into_alternate_push_pull(&mut gpiob.crh),
+          gpiob.pb13.into_alternate_push_pull(&mut gpiob.crh),
+          gpiob.pb14.into_floating_input(&mut gpiob.crh),
+          gpiob.pb15.into_alternate_push_pull(&mut gpiob.crh),
         );
-        let spi = Spi::spi2(dp.SPI2, spi_pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
-        let mut ws = Ws2812::new(spi);
+        let spi = Spi::spi2(cx.device.SPI2, spi_pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
+        let display: Display = Ws2812::new(spi);
 
-        // Configure buttons
-        let b0 = gpiob.pb10.into_pull_down_input(&mut gpiob.crh);
-        // let b1 = gpiob.pb11.into_pull_down_input(&mut gpiob.crh);
-        // let b2 = gpiob.pb12.into_pull_down_input(&mut gpiob.crh);
-
-        // Setup interrupt driven timer, and move to shared variable
-        let mut timer = Timer::tim2(dp.TIM2, &clocks, &mut rcc.apb1).start_count_down(10.hz());
+        // Configure the syst timer to trigger an update every second and enables interrupt
+        let mut timer =
+            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(1.hz());
         timer.listen(Event::Update);
-        cortex_m::interrupt::free(|cs| *G_TIM.borrow(cs).borrow_mut() = Some(timer));
-        unsafe {
-          cortex_m::peripheral::NVIC::unmask(pac::Interrupt::TIM2);
-        }
 
+        cx.schedule.animate(cx.start).unwrap();
 
-        let mut delay = Delay::new(cp.SYST, clocks);
-
-        let mut anim = animation::anim4::Anim::new();
-        let mut frame = anim.init_frame();
-        ws.write(frame.iter().cloned()).unwrap();
-
-        loop {
-          let delayms = anim.next_frame(&mut frame);
-          ws.write(frame.iter().cloned()).unwrap();
-          delay.delay_ms(delayms);
+        // Init the static resources to use them later through RTIC
+        init::LateResources {
+            led,
+            timer_handler: timer,
+            display
         }
     }
-    loop {
-        continue;
+
+    #[idle]
+    fn idle(_cx: idle::Context) -> ! {
+      loop {
+        cortex_m::asm::wfi();
+      }
     }
-}
 
-#[interrupt]
-fn TIM2() {
-  static mut TIM: Option<CountDownTimer<pac::TIM2>> = None;
-  static mut LED: Option<DEBUGLEDPIN> = None;
+    #[task(schedule = [animate], resources = [display])]
+    fn animate(cx: animate::Context) {
+      static mut ANIM: Option<animation::anim4::Anim> = None;
+      static mut FRAME: Option<animation::Frame>  = None;
 
-  let led = LED.get_or_insert_with(|| {
-    cortex_m::interrupt::free(|cs| {
-        // Move LED pin here, leaving a None in its place
-        G_LED.borrow(cs).replace(None).unwrap()
-    })
-  });
+      let anim = ANIM.get_or_insert_with(|| {
+        animation::anim4::Anim::new()
+      });
+      let mut frame = FRAME.get_or_insert_with(|| {
+        anim.init_frame()
+      });
 
-  let tim = TIM.get_or_insert_with(|| {
-    cortex_m::interrupt::free(|cs| {
-        G_TIM.borrow(cs).replace(None).unwrap()
-    })
-  });
+      cx.resources.display.write(frame.iter().cloned()).unwrap();
+      let delayms = anim.next_frame(&mut frame);
+      cx.resources.display.write(frame.iter().cloned()).unwrap();
+      let delay_cycles = Duration::from_cycles(delayms as u32 * 48_000u32);
+      cx.schedule.animate(cx.scheduled + delay_cycles).unwrap();
+    }
 
-  let _ = tim.wait();
-  let _ = led.toggle();
-}
+    #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler])]
+    fn tick(cx: tick::Context) {
+        cx.resources.led.toggle().unwrap();
+        // Clears the update flag
+        cx.resources.timer_handler.clear_update_interrupt_flag();
+    }
+
+    // RTIC requires that unused interrupts are declared in an extern block when
+    // using software tasks; these free interrupts will be used to dispatch the
+    // software tasks.
+    extern "C" {
+      fn USART1();
+  }
+};
