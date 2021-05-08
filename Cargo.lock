@@ -37,22 +37,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blue-pill-quickstart"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "cortex-m-rtic",
- "embedded-hal",
- "panic-halt",
- "panic-rtt-target",
- "rtt-target 0.3.0",
- "smart-leds",
- "stm32f1xx-hal",
- "ws2812-spi",
-]
-
-[[package]]
 name = "bytemuck"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -203,6 +187,22 @@ dependencies = [
  "generic-array 0.14.4",
  "hash32",
  "stable_deref_trait",
+]
+
+[[package]]
+name = "hexalamp"
+version = "0.1.0"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
+ "cortex-m-rtic",
+ "embedded-hal",
+ "panic-halt",
+ "panic-rtt-target",
+ "rtt-target 0.3.0",
+ "smart-leds",
+ "stm32f1xx-hal",
+ "ws2812-spi",
 ]
 
 [[package]]
