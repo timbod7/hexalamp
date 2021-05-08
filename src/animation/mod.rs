@@ -16,11 +16,15 @@ pub trait Animation {
   fn next_frame(&mut self, frame: &mut Frame) -> u16;
 }
 
+pub mod gamma;
 pub mod anim0;
 pub mod anim1;
 pub mod anim2;
 pub mod anim3;
 pub mod anim4;
+pub mod combo1;
+
+use gamma::GAMMA;
 
  const ADDR: [[usize; FRAME_YMAX]; FRAME_XMAX] = [
   [0, 1, 30, 31, 62, 63, 92, 93, 124, 125],
@@ -56,6 +60,19 @@ fn fill(frame: &mut Frame, color: RGB8) {
   }
 }
 
+// Fade the contents of the frame:
+//     u/v = 1  => leave as is
+//     u/v = 0  => fully black
+fn fade(frame: &mut Frame, u0: usize, v0:usize) -> () {
+  let u = GAMMA[u0 * (GAMMA.len()-1) / v0] as usize;
+  let v = 255;
+  for i in 0..FRAME_SIZE {
+    frame[i].r = ((frame[i].r as usize * u) / v) as u8;
+    frame[i].g = ((frame[i].g as usize * u) / v) as u8;
+    frame[i].b = ((frame[i].b as usize * u) / v) as u8;
+  }
+} 
+
 
 
 pub struct XorShift32 {
@@ -73,27 +90,6 @@ impl XorShift32 {
   }
 }
 
-
-
-const NUM_GAMMA: usize = 16;
-const GAMMA : [u8; NUM_GAMMA] = [
-  0,
-  1,
-  2,
-  6,
-  12,
-  20,
-  31,
-  44,
-  60,
-  79,
-  100,
-  125,
-  153,
-  183,
-  218,
-  255,
-];
 
 #[derive(Copy, Clone)]
  struct CellAddr {

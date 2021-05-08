@@ -84,7 +84,7 @@ const APP: () = {
 
         // Configure the syst timer to trigger an update every second and enables interrupt
         let mut timer =
-            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(1.hz());
+            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(100.hz());
         timer.listen(Event::Update);
 
         cx.schedule.animate(cx.start).unwrap();
@@ -104,13 +104,13 @@ const APP: () = {
       }
     }
 
-    #[task(schedule = [animate], resources = [display])]
+    #[task(schedule = [animate], priority = 2, resources = [display])]
     fn animate(cx: animate::Context) {
-      static mut ANIM: Option<animation::anim4::Anim> = None;
+      static mut ANIM: Option<animation::combo1::Anim> = None;
       static mut FRAME: Option<animation::Frame>  = None;
 
       let anim = ANIM.get_or_insert_with(|| {
-        animation::anim4::Anim::new()
+        animation::combo1::Anim::new()
       });
       let mut frame = FRAME.get_or_insert_with(|| {
         anim.init_frame()

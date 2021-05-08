@@ -1,7 +1,8 @@
 use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
-use super::{Animation, Frame, XorShift32, CellAddr, CellType, GAMMA, NUM_GAMMA, FRAME_SIZE, FRAME_XMAX, FRAME_YMAX};
+use super::{Animation, Frame, XorShift32, CellAddr, CellType, FRAME_SIZE, FRAME_XMAX, FRAME_YMAX};
+use super::gamma::GAMMA;
 
 const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
 
@@ -75,7 +76,7 @@ impl Anim {
 
       let hue : u8 = if s > 0 {HUE1} else {HUE2};
       let sat : u8 = 255;
-      let val : u8 = GAMMA[(NUM_GAMMA as i32 *  s.abs() / CLAMP_S) as usize] as u8;
+      let val : u8 = GAMMA[(GAMMA.len() as i32 *  s.abs() / CLAMP_S) as usize] as u8;
       // let val : u8 = (255 *  s.abs() / CLAMP_S) as u8;
       frame[fi] = hsv2rgb(Hsv{hue, sat, val});
     }
