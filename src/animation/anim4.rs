@@ -75,7 +75,7 @@ impl Pattern {
   fn next_frame(&mut self, frame: &mut Frame, rng: &mut XorShift32, colors: &Colors) {
     match self.mode {
       Mode::Grow => {
-        if self.trail.size == 10 {
+        if self.trail.size == 12 {
           self.mode = Mode::Shrink;
         } else {
           let head = self.trail.head();

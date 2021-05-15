@@ -106,11 +106,11 @@ const APP: () = {
 
     #[task(schedule = [animate], priority = 2, resources = [display])]
     fn animate(cx: animate::Context) {
-      static mut ANIM: Option<animation::combo1::Anim> = None;
+      static mut ANIM: Option<AnimType> = None;
       static mut FRAME: Option<animation::Frame>  = None;
 
       let anim = ANIM.get_or_insert_with(|| {
-        animation::combo1::Anim::new()
+        AnimType::new()
       });
       let mut frame = FRAME.get_or_insert_with(|| {
         anim.init_frame()
@@ -137,3 +137,5 @@ const APP: () = {
       fn USART1();
   }
 };
+
+type AnimType = animation::combo1::Anim;
