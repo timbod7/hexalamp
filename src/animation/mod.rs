@@ -197,4 +197,40 @@ impl CellType {
 }
 
 
+struct Trail<const TSIZE: usize> {
+  cells: [CellAddr; TSIZE],
+  headi: usize,
+  size: usize,
+}
 
+impl <const TSIZE: usize> Trail<TSIZE> {
+ pub fn new() -> Self {
+   Trail {
+     cells: [CellAddr{x:0,y:0}; TSIZE],
+     headi:0,
+     size:0,
+   }
+ }
+
+ pub fn head(&mut self) -> CellAddr {
+   self.cells[self.headi]
+ }
+
+ pub fn push_head(&mut self, addr:CellAddr) {
+   self.headi = (self.headi + 1) % TSIZE;
+   self.cells[self.headi] = addr;
+   if self.size < TSIZE {
+     self.size += 1;
+   }
+ }
+
+ pub fn pop_tail(&mut self) {
+   if self.size > 0 {
+     self.size -= 1;
+   }
+ }
+
+ pub fn cell(&self, i: usize) -> CellAddr {
+   self.cells[(self.headi + TSIZE - i) % TSIZE]
+ }
+}
