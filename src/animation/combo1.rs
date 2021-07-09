@@ -7,13 +7,14 @@ pub struct Anim {
   anim2: super::anim2::Anim,
   anim4: super::anim4::Anim,
   anim5: super::anim5::Anim,
+  anim6: super::anim6::Anim,
 
   state: State,
   framei: usize,
   animi: usize,
 }
 
-const NUM_ANIMS: usize = 3;
+const NUM_ANIMS: usize = 4;
 
 enum State { FADE_IN, FADE_OUT, RUN }
 
@@ -23,6 +24,7 @@ impl Anim {
       anim2: super::anim2::Anim::new(),
       anim4: super::anim4::Anim::new(),
       anim5: super::anim5::Anim::new(),
+      anim6: super::anim6::Anim::new(),
       state: State::FADE_IN,
       framei: 0,
       animi: 0
@@ -68,7 +70,8 @@ impl Anim {
       let delayms = match self.animi {
         0 => self.anim2.next_frame(frame),
         1 => self.anim4.next_frame(frame),
-        _ => self.anim5.next_frame(frame),
+        2 => self.anim5.next_frame(frame),
+        _ => self.anim6.next_frame(frame),
       };
 
       match &self.state {

@@ -66,3 +66,7 @@ pub const GAMMA : [u8; 64] = [
 	 246,
 	 255,
 ];
+
+pub fn gamma(val: u8) -> u8 {
+  GAMMA[core::cmp::min(val as usize / 4, GAMMA.len()-1)]
+}
