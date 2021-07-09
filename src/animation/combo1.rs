@@ -6,11 +6,14 @@ use super::{Animation, Frame, fade};
 pub struct Anim {
   anim2: super::anim2::Anim,
   anim4: super::anim4::Anim,
+  anim5: super::anim5::Anim,
 
   state: State,
   framei: usize,
   animi: usize,
 }
+
+const NUM_ANIMS: usize = 3;
 
 enum State { FADE_IN, FADE_OUT, RUN }
 
@@ -19,6 +22,7 @@ impl Anim {
     Anim {
       anim2: super::anim2::Anim::new(),
       anim4: super::anim4::Anim::new(),
+      anim5: super::anim5::Anim::new(),
       state: State::FADE_IN,
       framei: 0,
       animi: 0
@@ -49,7 +53,7 @@ impl Anim {
         State::FADE_OUT => {
           if self.framei >= FADE_OUT_FRAMES {
             self.state = State::FADE_IN;
-            self.animi = (self.animi + 1) % 2;
+            self.animi = (self.animi + 1) % NUM_ANIMS;
             self.framei = 0;
           }
         }
@@ -61,10 +65,10 @@ impl Anim {
         }
       }
 
-      let delayms = if self.animi == 0 {
-        self.anim2.next_frame(frame)
-      } else {
-        self.anim4.next_frame(frame)
+      let delayms = match self.animi {
+        0 => self.anim2.next_frame(frame),
+        1 => self.anim4.next_frame(frame),
+        _ => self.anim5.next_frame(frame),
       };
 
       match &self.state {

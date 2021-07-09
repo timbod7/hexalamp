@@ -22,6 +22,7 @@ pub mod anim1;
 pub mod anim2;
 pub mod anim3;
 pub mod anim4;
+pub mod anim5;
 pub mod combo1;
 
 use gamma::GAMMA;
