@@ -102,7 +102,7 @@ impl Pattern {
     let hex4 = hex3.right().down();
     let hex5 = hex4.down();
     
-    const PERIOD : usize = 64;    
+    const PERIOD : usize = 200;    
     const PERIOD2 : usize = PERIOD/2;
 
 
