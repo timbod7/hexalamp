@@ -17,6 +17,7 @@ pub trait Animation {
 }
 
 pub mod gamma;
+pub mod switcher;
 pub mod anim0;
 pub mod anim1;
 pub mod anim2;
