@@ -11,6 +11,7 @@ pub struct Anim {
 
   state: State,
   framei: usize,
+  ms: usize,
   animi: usize,
 }
 
@@ -27,14 +28,15 @@ impl Anim {
       anim6: super::anim6::Anim::new(),
       state: State::FADE_IN,
       framei: 0,
-      animi: 0
+      ms: 0,
+      animi: 0,
     }
   }
  }
 
  static FADE_IN_FRAMES:usize = 20;
  static FADE_OUT_FRAMES:usize = 20;
- static RUN_FRAMES:usize = 200;
+ static RUN_MS:usize = 30000;
  
  impl Animation for Anim {
    fn init_frame(&self) -> Frame {
@@ -57,12 +59,14 @@ impl Anim {
             self.state = State::FADE_IN;
             self.animi = (self.animi + 1) % NUM_ANIMS;
             self.framei = 0;
+            self.ms = 0;
           }
         }
         State::RUN => {
-          if self.framei >= RUN_FRAMES {
+          if self.ms >= RUN_MS {
             self.state = State::FADE_OUT;
             self.framei = 0;
+            self.ms = 0;
           }
         }
       }
@@ -73,6 +77,8 @@ impl Anim {
         2 => self.anim5.next_frame(frame),
         _ => self.anim6.next_frame(frame),
       };
+
+      self.ms += delayms as usize;
 
       match &self.state {
         State::FADE_IN => fade(frame, self.framei, FADE_IN_FRAMES),
