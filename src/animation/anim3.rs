@@ -30,10 +30,6 @@ impl Anim {
  }
  
  impl Animation for Anim {
-  
-  fn init_frame(&self) -> Frame {
-    [BLACK; FRAME_SIZE]
-  }
  
   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
 

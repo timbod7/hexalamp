@@ -17,11 +17,6 @@ impl Anim {
 
 impl Animation for Anim {
 
-
-  fn init_frame(&self) -> Frame {
-    [BG; 180]
-  }
-
   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
 
     fill( frame, BG);

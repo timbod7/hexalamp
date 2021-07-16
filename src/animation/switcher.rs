@@ -39,11 +39,7 @@ impl<AV: AnimationVector> Anim<AV> {
  }
 
  
- impl <AV: AnimationVector> Animation for Anim<AV> {
-   fn init_frame(&self) -> Frame {
-     self.anims.ref_anim(self.animi).init_frame()
-   }
- 
+ impl <AV: AnimationVector> Animation for Anim<AV> { 
     fn next_frame(&mut self, frame: &mut Frame) -> u16 {
 
       self.framei += 1;

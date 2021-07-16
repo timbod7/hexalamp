@@ -18,11 +18,6 @@ impl Anim {
  
  impl Animation for Anim {
  
- 
-   fn init_frame(&self) -> Frame {
-     [BLACK; 180]
-   }
- 
    fn next_frame(&mut self, frame: &mut Frame) -> u16 {
      self.framei = self.framei + 1;
 

@@ -113,7 +113,7 @@ const APP: () = {
         AnimType::new()
       });
       let mut frame = FRAME.get_or_insert_with(|| {
-        anim.init_frame()
+        animation::initFrame()
       });
 
       cx.resources.display.write(frame.iter().cloned()).unwrap();

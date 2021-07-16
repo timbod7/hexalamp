@@ -36,10 +36,7 @@ impl Anim {
  }
  
  impl Animation for Anim {
-   fn init_frame(&self) -> Frame {
-     [self.colors.bg; 180]
-   }
- 
+    
     fn next_frame(&mut self, frame: &mut Frame) -> u16 {
       fill(frame, self.colors.bg);
       for pi in 0..NUM_PATTERNS {

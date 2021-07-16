@@ -8,12 +8,13 @@ pub const FRAME_YMAX: usize = 12;
 pub type Frame = [RGB8; FRAME_SIZE];
 
 pub trait Animation {
-  // Create the frame for the start of the animations
-  fn init_frame(&self) -> Frame;
-
   // Generate the next frame of the animation, and return the delay in
   // ms until the next;
   fn next_frame(&mut self, frame: &mut Frame) -> u16;
+}
+
+pub fn initFrame() -> Frame {
+  [RGB8 {r: 0, g: 0, b: 0,}; FRAME_SIZE]
 }
 
 pub mod gamma;
