@@ -7,10 +7,12 @@ pub const FRAME_YMAX: usize = 12;
 
 pub type Frame = [RGB8; FRAME_SIZE];
 
-pub trait Animation {
-  // Generate the next frame of the animation, and return the delay in
+// An animation with inputs of type I
+pub trait Animation<I> {
+  // Given any control inputs, generate the next frame of
+  // the animation, and return the delay in
   // ms until the next;
-  fn next_frame(&mut self, frame: &mut Frame) -> u16;
+  fn next_frame(&mut self, input: &I, frame: &mut Frame) -> u16;
 }
 
 pub fn initFrame() -> Frame {

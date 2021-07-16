@@ -29,9 +29,9 @@ impl Anim {
   }
  }
  
- impl Animation for Anim {
- 
-  fn next_frame(&mut self, frame: &mut Frame) -> u16 {
+ impl <I> Animation<I> for Anim {
+
+  fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
 
     // Update velocities
     for x in 0..FRAME_XMAX {

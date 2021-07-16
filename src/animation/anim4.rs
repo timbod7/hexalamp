@@ -35,9 +35,9 @@ impl Anim {
   }
  }
  
- impl Animation for Anim {
-    
-    fn next_frame(&mut self, frame: &mut Frame) -> u16 {
+ impl <I> Animation<I> for Anim {
+
+    fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
       fill(frame, self.colors.bg);
       for pi in 0..NUM_PATTERNS {
         self.patterns[pi].next_frame(frame, &mut self.rng, &self.colors);

@@ -1,5 +1,5 @@
 use smart_leds::{RGB8};
-use super::{Animation, Frame, fill, faddr, FRAME_YMAX, FRAME_XMAX};
+use super::{Animation, Frame, fill, faddr, FRAME_YMAX};
 
 const BG: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
 const FG: RGB8 = RGB8 {r: 0xff, g: 0xff, b: 0xff};
@@ -15,9 +15,9 @@ impl Anim {
   }
 }
 
-impl Animation for Anim {
+impl <I> Animation<I> for Anim {
 
-  fn next_frame(&mut self, frame: &mut Frame) -> u16 {
+  fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
 
     fill( frame, BG);
     let x = self.framei / FRAME_YMAX;

@@ -6,8 +6,8 @@ pub trait AnimationVector {
   fn new() -> Self;
   fn num_animations(&self) -> usize;
 
-  fn ref_anim(&self, i: usize) -> & dyn Animation;
-  fn mutref_anim(&mut self, i: usize) -> &mut dyn Animation;
+  fn ref_anim(&self, i: usize) -> & dyn Animation<()>;
+  fn mutref_anim(&mut self, i: usize) -> &mut dyn Animation<()>;
 }
 
 
@@ -39,8 +39,8 @@ impl<AV: AnimationVector> Anim<AV> {
  }
 
  
- impl <AV: AnimationVector> Animation for Anim<AV> { 
-    fn next_frame(&mut self, frame: &mut Frame) -> u16 {
+ impl <AV: AnimationVector> Animation<()> for Anim<AV> {
+    fn next_frame(&mut self, inputs: &(), frame: &mut Frame) -> u16 {
 
       self.framei += 1;
 
@@ -68,7 +68,7 @@ impl<AV: AnimationVector> Anim<AV> {
         }
       }
 
-      let delayms = self.anims.mutref_anim(self.animi).next_frame(frame);
+      let delayms = self.anims.mutref_anim(self.animi).next_frame(inputs, frame);
 
       self.ms += delayms as usize;
 

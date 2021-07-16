@@ -17,8 +17,9 @@ use rtic::cyccnt::{Duration};
 use cortex_m::peripheral::DWT;
 
 use stm32f1xx_hal::{
-    gpio::{gpiob, gpioc::PC13, Output, PushPull, State, Alternate, Input, Floating},
+    gpio::{gpiob, gpioc::PC13, Output, PushPull, State, Alternate, Input, Floating, Analog},
     pac,
+    adc,
     prelude::*,
     timer::{CountDownTimer, Event, Timer},
 };
@@ -29,6 +30,7 @@ use crate::ws2812::Ws2812;
 use smart_leds::{SmartLedsWrite};
 
 mod animation;
+mod adcbuttons;
 use animation::{Animation};
 
 
@@ -40,6 +42,8 @@ const APP: () = {
         led: PC13<Output<PushPull>>,
         timer_handler: CountDownTimer<pac::TIM1>,
         display: Display,
+        adc1: adc::Adc<pac::ADC1>,
+        adc1_c0: gpiob::PB0<Analog>,
     }
 
     #[init(schedule = [animate])]
@@ -62,6 +66,7 @@ const APP: () = {
           .cfgr
           .sysclk(48.mhz())
           .pclk1(24.mhz())
+          .adcclk(2.mhz())
           .freeze(&mut flash.acr);
 
         // Acquire the GPIOC peripheral
@@ -82,9 +87,13 @@ const APP: () = {
         let spi = Spi::spi2(cx.device.SPI2, spi_pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
         let display: Display = Ws2812::new(spi);
 
+        // Setup ADC
+        let mut adc1 = adc::Adc::adc1(cx.device.ADC1, &mut rcc.apb2, clocks);
+        let mut adc1_c0 = gpiob.pb0.into_analog(&mut gpiob.crl);
+
         // Configure the syst timer to trigger an update every second and enables interrupt
         let mut timer =
-            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(100.hz());
+            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(10.hz());
         timer.listen(Event::Update);
 
         cx.schedule.animate(cx.start).unwrap();
@@ -93,7 +102,9 @@ const APP: () = {
         init::LateResources {
             led,
             timer_handler: timer,
-            display
+            display,
+            adc1,
+            adc1_c0,
         }
     }
 
@@ -117,15 +128,21 @@ const APP: () = {
       });
 
       cx.resources.display.write(frame.iter().cloned()).unwrap();
-      let delayms = anim.next_frame(&mut frame);
+      let delayms = anim.next_frame(&(), &mut frame);
       cx.resources.display.write(frame.iter().cloned()).unwrap();
       let delay_cycles = Duration::from_cycles(delayms as u32 * 48_000u32);
       cx.schedule.animate(cx.scheduled + delay_cycles).unwrap();
     }
 
-    #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler])]
+    #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler, adc1, adc1_c0])]
     fn tick(cx: tick::Context) {
+        // Prove we got here
         cx.resources.led.toggle().unwrap();
+
+        // read an adc value, and convert the level to a button
+        let adcval: u16 = cx.resources.adc1.read(cx.resources.adc1_c0).unwrap();
+        let b = adcbuttons::Button::fromAdc(adcval);
+
         // Clears the update flag
         cx.resources.timer_handler.clear_update_interrupt_flag();
     }
@@ -138,4 +155,6 @@ const APP: () = {
   }
 };
 
-type AnimType = animation::combo1::Anim;
+type AnimType = animation::anim1::Anim;
+type AnimInputType = ();
+

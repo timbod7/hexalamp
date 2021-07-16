@@ -16,9 +16,9 @@ impl Anim {
   }
  }
  
- impl Animation for Anim {
+ impl <I> Animation<I> for Anim {
  
-   fn next_frame(&mut self, frame: &mut Frame) -> u16 {
+   fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
      self.framei = self.framei + 1;
 
      for ci in 0..FRAME_XMAX {
