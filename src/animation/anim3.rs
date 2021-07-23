@@ -1,10 +1,7 @@
-use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
 use super::{Animation, Frame, XorShift32, CellAddr, CellType, FRAME_SIZE, FRAME_XMAX, FRAME_YMAX};
 use super::gamma::GAMMA;
-
-const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
 
 const K1: i32 = 1;
 const K2: i32 = 100;
@@ -31,7 +28,7 @@ impl Anim {
  
  impl <I> Animation<I> for Anim {
 
-  fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
+  fn next_frame(&mut self, _inputs: &I, frame: &mut Frame) -> u16 {
 
     // Update velocities
     for x in 0..FRAME_XMAX {

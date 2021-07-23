@@ -1,6 +1,6 @@
 use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
-use super::{Animation, Frame, XorShift32, CellAddr, CellOrientation, Trail, fill, FRAME_XMAX, FRAME_YMAX};
+use super::{Animation, Frame, XorShift32, CellAddr, CellOrientation, Trail, fill, FRAME_YMAX};
 
 
 
@@ -37,7 +37,7 @@ impl Anim {
  }
  
  impl <I> Animation<I> for Anim {
-    fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
+    fn next_frame(&mut self, _inputs: &I, frame: &mut Frame) -> u16 {
       fill(frame, self.colors.bg);
       for pi in 0..NUM_PATTERNS {
         self.patterns[pi].next_frame(frame, &mut self.rng, &self.colors);

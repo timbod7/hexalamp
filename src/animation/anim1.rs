@@ -27,7 +27,6 @@ impl Animation<ButtonState> for Anim {
 
     fill( frame, Anim::BG);
 
-    let b = self.framei as i16;
     let r = match inputs {
       Option::None => 0,
       Option::Some(Button::UP) => 1,

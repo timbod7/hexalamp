@@ -15,7 +15,7 @@ pub trait Animation<I> {
   fn next_frame(&mut self, input: &I, frame: &mut Frame) -> u16;
 }
 
-pub fn initFrame() -> Frame {
+pub fn init_frame() -> Frame {
   [RGB8 {r: 0, g: 0, b: 0,}; FRAME_SIZE]
 }
 

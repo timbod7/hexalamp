@@ -26,7 +26,7 @@ pub enum Button {
 }
 
 impl Button {
-  pub fn fromAdc(adc:u16) -> Option<Button> {
+  pub fn from_adc(adc:u16) -> Option<Button> {
     if adc < 259 {
       Option::from(Button::DOWN)
     } else if adc < 754 {

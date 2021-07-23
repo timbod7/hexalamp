@@ -17,7 +17,7 @@ impl Anim {
 
 impl <I> Animation<I> for Anim {
 
-  fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
+  fn next_frame(&mut self, _inputs: &I, frame: &mut Frame) -> u16 {
 
     fill( frame, BG);
     let x = self.framei / FRAME_YMAX;

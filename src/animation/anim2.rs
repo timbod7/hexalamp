@@ -1,10 +1,6 @@
-use smart_leds::{RGB8};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
 use super::{Animation, Frame, faddr, FRAME_XMAX, FRAME_YMAX};
-
-const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
-
 
 pub struct Anim {
   framei: usize
@@ -18,7 +14,7 @@ impl Anim {
  
  impl <I> Animation<I> for Anim {
  
-   fn next_frame(&mut self, inputs: &I, frame: &mut Frame) -> u16 {
+   fn next_frame(&mut self, _inputs: &I, frame: &mut Frame) -> u16 {
      self.framei = self.framei + 1;
 
      for ci in 0..FRAME_XMAX {

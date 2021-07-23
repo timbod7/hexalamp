@@ -1,12 +1,8 @@
 use smart_leds::{RGB8};
 use super::{Animation, Frame, fill, faddr};
-use super::super::adcbuttons::{Button, ButtonState};
 
 const BLACK: RGB8 = RGB8 {r: 0, g: 0, b: 0,};
 const BLUE: RGB8 = RGB8 {r: 0, g: 0, b: 0xff,};
-const GREEN: RGB8 = RGB8 {r: 0, g: 0xff, b: 0,};
-const RED: RGB8 = RGB8 {r: 0xff, g: 0, b: 0,};
-const YELLOW: RGB8 = RGB8 {r: 255, g:128, b: 0,};
 
 
 pub struct Anim {

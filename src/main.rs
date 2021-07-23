@@ -1,10 +1,6 @@
 #![no_main]
 #![no_std]
-
-//use panic_rtt_target as _;
-//use rtt_target::rtt_init_default;
-
-#![no_main]
+#![allow(dead_code)]
 
 // you can put a breakpoint on `rust_begin_unwind` to catch panics
 use panic_halt as _;
@@ -101,7 +97,6 @@ const APP: () = {
 
         cx.schedule.animate(cx.start).unwrap();
 
-        let buttons : Option<adcbuttons::Button> = Option::None;
         let inputs: u16 = 0;
 
         // Init the static resources to use them later through RTIC
@@ -131,7 +126,7 @@ const APP: () = {
         AnimType::new()
       });
       let mut frame = FRAME.get_or_insert_with(|| {
-        animation::initFrame()
+        animation::init_frame()
       });
 
       // let inputs = cx.resources.inputs;
