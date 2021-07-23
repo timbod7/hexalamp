@@ -44,6 +44,7 @@ const APP: () = {
         display: Display,
         adc1: adc::Adc<pac::ADC1>,
         adc1_c0: gpiob::PB0<Analog>,
+        inputs: u16,
     }
 
     #[init(schedule = [animate])]
@@ -91,12 +92,17 @@ const APP: () = {
         let mut adc1 = adc::Adc::adc1(cx.device.ADC1, &mut rcc.apb2, clocks);
         let mut adc1_c0 = gpiob.pb0.into_analog(&mut gpiob.crl);
 
+        // iprintln!(&mut itm.stim[0], "Hello, world!");
+
         // Configure the syst timer to trigger an update every second and enables interrupt
         let mut timer =
             Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(10.hz());
         timer.listen(Event::Update);
 
         cx.schedule.animate(cx.start).unwrap();
+
+        let buttons : Option<adcbuttons::Button> = Option::None;
+        let inputs: u16 = 0;
 
         // Init the static resources to use them later through RTIC
         init::LateResources {
@@ -105,6 +111,7 @@ const APP: () = {
             display,
             adc1,
             adc1_c0,
+            inputs,
         }
     }
 
@@ -115,7 +122,7 @@ const APP: () = {
       }
     }
 
-    #[task(schedule = [animate], priority = 2, resources = [display])]
+    #[task(schedule = [animate], priority = 2, resources = [inputs, display])]
     fn animate(cx: animate::Context) {
       static mut ANIM: Option<AnimType> = None;
       static mut FRAME: Option<animation::Frame>  = None;
@@ -127,21 +134,30 @@ const APP: () = {
         animation::initFrame()
       });
 
+      let inputs = cx.resources.inputs;
+
       cx.resources.display.write(frame.iter().cloned()).unwrap();
-      let delayms = anim.next_frame(&(), &mut frame);
+      let delayms = anim.next_frame(&inputs, &mut frame);
       cx.resources.display.write(frame.iter().cloned()).unwrap();
       let delay_cycles = Duration::from_cycles(delayms as u32 * 48_000u32);
       cx.schedule.animate(cx.scheduled + delay_cycles).unwrap();
     }
 
-    #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler, adc1, adc1_c0])]
-    fn tick(cx: tick::Context) {
+    #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler, adc1, adc1_c0, inputs])]
+    fn tick(mut cx: tick::Context) {
         // Prove we got here
         cx.resources.led.toggle().unwrap();
 
         // read an adc value, and convert the level to a button
         let adcval: u16 = cx.resources.adc1.read(cx.resources.adc1_c0).unwrap();
-        let b = adcbuttons::Button::fromAdc(adcval);
+        cx.resources.inputs.lock( |i| {
+          *i = adcval
+        });
+
+        //let b = adcbuttons::Button::fromAdc(adcval);
+        //cx.resources.inputs.lock( |buttons| {
+        //  *buttons = b
+        //});
 
         // Clears the update flag
         cx.resources.timer_handler.clear_update_interrupt_flag();
@@ -155,6 +171,4 @@ const APP: () = {
   }
 };
 
-type AnimType = animation::anim1::Anim;
-type AnimInputType = ();
-
+type AnimType = animation::adcdisplay::Anim;

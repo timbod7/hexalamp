@@ -15,6 +15,8 @@
 //  right 6.8k      518       754     
 //   down   0k        0       259
 
+pub type ButtonState = Option<Button>;
+
 pub enum Button {
   DOWN,
   RIGHT,

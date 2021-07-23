@@ -29,6 +29,7 @@ pub mod anim4;
 pub mod anim5;
 pub mod anim6;
 pub mod combo1;
+pub mod adcdisplay;
 
 use gamma::GAMMA;
 
