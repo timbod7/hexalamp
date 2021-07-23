@@ -134,7 +134,8 @@ const APP: () = {
         animation::initFrame()
       });
 
-      let inputs = cx.resources.inputs;
+      // let inputs = cx.resources.inputs;
+      let inputs = ();
 
       cx.resources.display.write(frame.iter().cloned()).unwrap();
       let delayms = anim.next_frame(&inputs, &mut frame);
@@ -171,4 +172,4 @@ const APP: () = {
   }
 };
 
-type AnimType = animation::adcdisplay::Anim;
+type AnimType = animation::combo1::Anim;

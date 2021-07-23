@@ -1,5 +1,5 @@
 
-use super::{Animation, Frame, fade};
+use super::{Animation};
 use super::switcher;
 
 pub struct Anims  {
@@ -9,7 +9,7 @@ pub struct Anims  {
   anim6: super::anim6::Anim,
 }
 
-impl switcher::AnimationVector for Anims {
+impl switcher::AnimationVector<Input> for Anims {
   fn new() -> Self {
     Anims {
       anim2: super::anim2::Anim::new(),
@@ -21,7 +21,7 @@ impl switcher::AnimationVector for Anims {
 
   fn num_animations(&self) -> usize { 4 }
 
-  fn ref_anim(&self, i: usize) -> &dyn Animation<()> {
+  fn ref_anim(&self, i: usize) -> &dyn Animation<Input> {
     match i {
       0 => & self.anim2,
       1 => & self.anim4,
@@ -30,7 +30,7 @@ impl switcher::AnimationVector for Anims {
     }
   }
 
-  fn mutref_anim(&mut self, i: usize) -> &mut dyn Animation<()> {
+  fn mutref_anim(&mut self, i: usize) -> &mut dyn Animation<Input> {
     match i {
       0 => &mut self.anim2,
       1 => &mut self.anim4,
@@ -40,4 +40,5 @@ impl switcher::AnimationVector for Anims {
   }
 }
 
-pub type Anim = switcher::Anim<Anims>;
+pub type Input = ();
+pub type Anim = switcher::Anim<(),Anims>;
