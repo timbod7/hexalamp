@@ -7,6 +7,7 @@ lightbox_depth = 35;
 inner_diameter = num_leds * triangle_spacing / PI;
 outer_diameter = inner_diameter + lightbox_depth;
 layer_height = outer_diameter * PI / num_leds * tan(60);
+mount_bracket_length = 10;
 
 led_hole_size = 6;
 clip_hole_width = 1.5;
@@ -162,7 +163,7 @@ module frame() {
     }
   }
   
-  mbl = 10;
+  mbl = mount_bracket_length;
   translate([0,inner_diameter/2 -mbl - wall_thickness/2,0])
   mount_bracket(mbl);
   rotate([0,0,180])
@@ -177,14 +178,67 @@ module pie(a1,a2,r) {
     [r*sin(a2), r * cos(a2)],
   ]);
 }
+ 
+diffuser_overhang_thickness = 1.2;
+diffuser_wall_thickness = 1.0;
+diffuser_radius_gap = 0.1;
+cap_vert_overhang = 5;
+cap_horz_overhang = 3;
 
 module diffuser() {
-  wall_thickness = 1.0;
-  overhang_thickness = 1.2;
   num_layers = 6;
-  ring(outer_diameter-10, outer_diameter + wall_thickness, overhang_thickness);
-  ring(outer_diameter, outer_diameter + wall_thickness, layer_height * num_layers + overhang_thickness); 
+  od = outer_diameter;
+  dot = diffuser_overhang_thickness;
+  dd = diffuser_radius_gap * 2;
+  total_height = layer_height * num_layers + cap_vert_overhang * 2;
+  ring(inner_diameter, od + dd + diffuser_wall_thickness, dot);
+  ring(od + dd, od + dd + diffuser_wall_thickness, total_height); 
 }
+
+module lower_spacer() {
+  ring(inner_diameter, outer_diameter, cap_vert_overhang - diffuser_overhang_thickness); 
+}
+
+module top_cap() {
+  d = outer_diameter + 2 * (diffuser_radius_gap + diffuser_wall_thickness + cap_horz_overhang);
+  difference() {
+    linear_extrude(cap_vert_overhang * 2) {
+      circle(d=d, $fn=200);
+    }
+    od1 = outer_diameter + 2 * diffuser_wall_thickness + 4 * diffuser_radius_gap;
+    ring(outer_diameter,od1,cap_vert_overhang);
+    
+    
+    mbl = mount_bracket_length;
+    translate([0,inner_diameter/2 -mbl - wall_thickness/2,0])
+    top_cap_hole();
+    rotate([0,0,180])
+    translate([0,inner_diameter/2 -mbl - wall_thickness/2,0])
+    top_cap_hole();
+  }
+}
+
+module top_cap_hole() {
+   support_thickness = 0.4;
+   nut_inset = 2;
+   difference() {
+     linear_extrude(8) {
+        circle(d=6, $fn=200);
+     }
+     translate([0,0,nut_inset-support_thickness]) {
+       linear_extrude(support_thickness) {
+          circle(d=6, $fn=200);
+       }
+     }
+   }
+   translate([0,0,nut_inset]) {
+     linear_extrude(5.5) {
+        circle(d=12, $fn=6);
+     }
+   }
+
+}
+
 
 module led_clip() {
   ct = clip_thickness;
@@ -213,19 +267,12 @@ module led_clip() {
   }
 }
 
-
-//intersection() {
-//  translate([0,0,-500])
-//  linear_extrude(1000)
-//  pie(160, 120, 1000);
-//  frame();
-//}
+// mount_bracket(10);
+// top_cap_hole();
 
 // led_clip();
-// led_hole();
-
-
 // frame();
-
-diffuser();
+// diffuser();
+// lower_spacer();
+top_cap();
 
