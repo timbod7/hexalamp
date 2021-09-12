@@ -270,6 +270,15 @@ module led_clip() {
 // mount_bracket(10);
 // top_cap_hole();
 
+//intersection() {
+//  top_cap();
+//  linear_extrude(30) {
+//    translate([-10,50])
+//    square(size=[20,200]);
+//  }
+//}
+
+
 // led_clip();
 // frame();
 // diffuser();
