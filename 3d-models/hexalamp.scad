@@ -267,7 +267,7 @@ module led_clip() {
   }
 }
 
-// mount_bracket(10);
+mount_bracket(10);
 // top_cap_hole();
 
 //intersection() {
@@ -283,5 +283,5 @@ module led_clip() {
 // frame();
 // diffuser();
 // lower_spacer();
-top_cap();
+//top_cap();
 

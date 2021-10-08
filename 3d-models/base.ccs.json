@@ -50,7 +50,7 @@
             {
               "type": "component",
               "componentName": "codeEditor",
-              "title": "* base.ccs.json",
+              "title": "base.ccs.json",
               "componentState": {
                 "code": [
                   "",
@@ -132,14 +132,15 @@
                   "}",
                   "",
                   "function base0() {",
-                  "    let hole_location = imports.inner_diameter/2 - imports.mount_bracket_length - imports.wall_thickness/2",
+                  "    let hole_location = imports.inner_diameter/2 - imports.mount_bracket_length - imports.wall_thickness/2;",
+                  "    let hole_diam = 6.5;",
                   "    let inset3_radius = inset2_radius - 3;",
                   "    let inset4_radius = inset3_radius - 2 * (inset3_radius-hole_location);",
                   "    let shell = Cylinder(base_outer_radius, base_outer_height);",
                   "    let inset1 = Cylinder(inset1_radius, inset1_height);",
                   "    let inset3 = Cylinder(inset3_radius, inset1_height);",
                   "    let inset4 = Cylinder(inset4_radius, base_outer_height);",
-                  "    let hole = Cylinder(4, base_outer_height);",
+                  "    let hole = Cylinder(hole_diam/2, base_outer_height);",
                   "",
                   "    return Difference(shell, [",
                   "        Translate([0, 0, base_outer_height - inset1_height], inset1),",
