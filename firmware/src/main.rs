@@ -4,33 +4,43 @@
 
 // you can put a breakpoint on `rust_begin_unwind` to catch panics
 use panic_halt as _;
-use ws2812_spi as ws2812;
 use stm32f1xx_hal as hal;
+use ws2812_spi as ws2812;
 
 use rtic::app;
-use rtic::cyccnt::{Duration};
+use rtic::cyccnt::Duration;
 
 use cortex_m::peripheral::DWT;
 
+use crate::hal::spi::Spi;
 use stm32f1xx_hal::{
-    gpio::{gpiob, gpioc::PC13, Output, PushPull, State, Alternate, Input, Floating, Analog},
-    pac,
     adc,
+    gpio::{gpiob, gpioc::PC13, Alternate, Analog, Floating, Input, Output, PushPull, State},
+    pac,
     prelude::*,
     timer::{CountDownTimer, Event, Timer},
 };
-use crate::hal::spi::Spi;
 
 use crate::ws2812::Ws2812;
 
-use smart_leds::{SmartLedsWrite};
+use smart_leds::SmartLedsWrite;
 
-mod animation;
 mod adcbuttons;
-use animation::{Animation};
+mod animation;
+use animation::Animation;
 
-
-type Display = ws2812_spi::Ws2812<Spi<stm32f1xx_hal::pac::SPI2, hal::spi::Spi2NoRemap, (gpiob::PB13<Alternate<PushPull>>, gpiob::PB14<Input<Floating>>, gpiob::PB15<Alternate<PushPull>>), u8>>;
+type Display = ws2812_spi::Ws2812<
+    Spi<
+        stm32f1xx_hal::pac::SPI2,
+        hal::spi::Spi2NoRemap,
+        (
+            gpiob::PB13<Alternate<PushPull>>,
+            gpiob::PB14<Input<Floating>>,
+            gpiob::PB15<Alternate<PushPull>>,
+        ),
+        u8,
+    >,
+>;
 
 #[app(device = stm32f1xx_hal::pac, monotonic = rtic::cyccnt::CYCCNT, peripherals = true)]
 const APP: () = {
@@ -58,13 +68,13 @@ const APP: () = {
 
         // Freeze the configuration of all the clocks in the system and store the frozen frequencies
         // in `clocks`
-        
+
         let clocks = rcc
-          .cfgr
-          .sysclk(48.mhz())
-          .pclk1(24.mhz())
-          .adcclk(2.mhz())
-          .freeze(&mut flash.acr);
+            .cfgr
+            .sysclk(48.mhz())
+            .pclk1(24.mhz())
+            .adcclk(2.mhz())
+            .freeze(&mut flash.acr);
 
         // Acquire the GPIOC peripheral
         let mut gpiob = cx.device.GPIOB.split(&mut rcc.apb2);
@@ -77,11 +87,18 @@ const APP: () = {
 
         // Configure SPI for ws2812 leds
         let spi_pins = (
-          gpiob.pb13.into_alternate_push_pull(&mut gpiob.crh),
-          gpiob.pb14.into_floating_input(&mut gpiob.crh),
-          gpiob.pb15.into_alternate_push_pull(&mut gpiob.crh),
+            gpiob.pb13.into_alternate_push_pull(&mut gpiob.crh),
+            gpiob.pb14.into_floating_input(&mut gpiob.crh),
+            gpiob.pb15.into_alternate_push_pull(&mut gpiob.crh),
         );
-        let spi = Spi::spi2(cx.device.SPI2, spi_pins, ws2812::MODE, 3.mhz(), clocks, &mut rcc.apb1);
+        let spi = Spi::spi2(
+            cx.device.SPI2,
+            spi_pins,
+            ws2812::MODE,
+            3.mhz(),
+            clocks,
+            &mut rcc.apb1,
+        );
         let display: Display = Ws2812::new(spi);
 
         // Setup ADC
@@ -112,31 +129,27 @@ const APP: () = {
 
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
-      loop {
-        cortex_m::asm::wfi();
-      }
+        loop {
+            cortex_m::asm::wfi();
+        }
     }
 
     #[task(schedule = [animate], priority = 2, resources = [inputs, display])]
     fn animate(cx: animate::Context) {
-      static mut ANIM: Option<AnimType> = None;
-      static mut FRAME: Option<animation::Frame>  = None;
+        static mut ANIM: Option<AnimType> = None;
+        static mut FRAME: Option<animation::Frame> = None;
 
-      let anim = ANIM.get_or_insert_with(|| {
-        AnimType::new()
-      });
-      let mut frame = FRAME.get_or_insert_with(|| {
-        animation::init_frame()
-      });
+        let anim = ANIM.get_or_insert_with(|| AnimType::new());
+        let mut frame = FRAME.get_or_insert_with(|| animation::init_frame());
 
-      // let inputs = cx.resources.inputs;
-      let inputs = ();
+        // let inputs = cx.resources.inputs;
+        let inputs = ();
 
-      cx.resources.display.write(frame.iter().cloned()).unwrap();
-      let delayms = anim.next_frame(&inputs, &mut frame);
-      cx.resources.display.write(frame.iter().cloned()).unwrap();
-      let delay_cycles = Duration::from_cycles(delayms as u32 * 48_000u32);
-      cx.schedule.animate(cx.scheduled + delay_cycles).unwrap();
+        cx.resources.display.write(frame.iter().cloned()).unwrap();
+        let delayms = anim.next_frame(&inputs, &mut frame);
+        cx.resources.display.write(frame.iter().cloned()).unwrap();
+        let delay_cycles = Duration::from_cycles(delayms as u32 * 48_000u32);
+        cx.schedule.animate(cx.scheduled + delay_cycles).unwrap();
     }
 
     #[task(binds = TIM1_UP, priority = 1, resources = [led, timer_handler, adc1, adc1_c0, inputs])]
@@ -146,9 +159,7 @@ const APP: () = {
 
         // read an adc value, and convert the level to a button
         let adcval: u16 = cx.resources.adc1.read(cx.resources.adc1_c0).unwrap();
-        cx.resources.inputs.lock( |i| {
-          *i = adcval
-        });
+        cx.resources.inputs.lock(|i| *i = adcval);
 
         //let b = adcbuttons::Button::fromAdc(adcval);
         //cx.resources.inputs.lock( |buttons| {
@@ -163,8 +174,8 @@ const APP: () = {
     // using software tasks; these free interrupts will be used to dispatch the
     // software tasks.
     extern "C" {
-      fn USART1();
-  }
+        fn USART1();
+    }
 };
 
 type AnimType = animation::combo1::Anim;
