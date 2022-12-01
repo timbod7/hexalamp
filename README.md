@@ -1,4 +1,14 @@
-Embedded rust code for a cylindrical LED light sculpture.
+# A cylindrical LED light sculpture
+
+3D Models:
+
+The [3d models](3d-models) are built in openscad and sliced with PrusaSlicer.
+
+
+Embedded Code:
+
+The [firmware](firmware) is written in rust.  
+
 
 
 Hardware:
